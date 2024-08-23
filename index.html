@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خدعة بصرية: خطوط حلزونية مع عداد تنازلي</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 80px;
+            height: 80px;
+            background-color: #3498db;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e74c3c;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .spiral {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: repeating-conic-gradient(
+                black 0deg 5deg,
+                transparent 5deg 10deg
+            );
+            clip-path: circle(50%);
+            animation: spin 5s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            to {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        .start-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            color: #fff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .start-button:hover {
+            background-color: #2980b9;
+        }
+
+        .instruction-text {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="circle" id="countdown">30</div>
+        <div class="spiral"></div>
+    </div>
+    <button class="start-button" id="startButton">ابدأ العد التنازلي</button>
+    <p class="instruction-text">ركز على العداد في المنتصف لمدة 30 ثانية، وبعدها انظر إلى الأشياء حولك، سوف تراها وكأنها تتحرك.</p>
+
+    <script>
+        // بدء العد التنازلي
+        let countdownInterval;
+
+        function startCountdown(duration, display) {
+            let timer = duration, seconds;
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(function () {
+                seconds = parseInt(timer % 60, 10);
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+                display.textContent = seconds;
+
+                if (--timer < 0) {
+                    clearInterval(countdownInterval);
+                    timer = 0;
+                }
+            }, 1000);
+        }
+
+        document.getElementById('startButton').addEventListener('click', function() {
+            const duration = 30; // مدة العد التنازلي بالثواني
+            const display = document.querySelector('#countdown');
+            startCountdown(duration, display);
+        });
+
+        // تسجيل الـ Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // إنشاء الـ Service Worker كـ Blob
+                const swScript = `
+                const CACHE_NAME = 'offline-cache-v1';
+                const urlsToCache = [
+                    '/',
+                    '/index.html'
+                ];
+
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => {
+                            return cache.addAll(urlsToCache);
+                        })
+                    );
+                });
+
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request).then(response => {
+                            return response || fetch(event.request);
+                        })
+                    );
+                });
+                `;
+                const blob = new Blob([swScript], { type: 'text/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl).then(function(registration) {
+                    console.log('تم تسجيل الـ Service Worker بنجاح:', registration.scope);
+                }).catch(function(error) {
+                    console.log('فشل تسجيل الـ Service Worker:', error);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
